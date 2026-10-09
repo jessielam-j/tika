@@ -64,4 +64,18 @@ public class CharsetSupersetsTest {
         assertEquals('\uFFFD', new String(eucjp, Charset.forName("EUC-JP")).charAt(0));
         assertEquals("\u2460", new String(eucjp, Charset.forName(name("EUC-JP"))));
     }
+    
+    @Test
+    void decodeAsReturnsSupersetWhenAvailable() {
+        Charset detected = Charset.forName("GB2312");
+        Charset result = CharsetSupersets.decodeAs(detected);
+        assertEquals(Charset.forName("GB18030"), result);
+    }
+
+    @Test
+    void decodeAsReturnsOriginalWhenNoSupersetExists() {
+        Charset detected = StandardCharsets.UTF_8;
+        Charset result = CharsetSupersets.decodeAs(detected);
+        assertEquals(detected, result);
+    }
 }

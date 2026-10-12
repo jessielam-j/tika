@@ -69,6 +69,7 @@ public class CharsetSupersetsTest {
     void decodeAsReturnsSupersetWhenAvailable() {
         Charset detected = Charset.forName("GB2312");
         Charset result = CharsetSupersets.decodeAs(detected);
+        // On vérifie que la méthode retourne le surensemble GB18030.
         assertEquals(Charset.forName("GB18030"), result);
     }
 
@@ -76,6 +77,14 @@ public class CharsetSupersetsTest {
     void decodeAsReturnsOriginalWhenNoSupersetExists() {
         Charset detected = StandardCharsets.UTF_8;
         Charset result = CharsetSupersets.decodeAs(detected);
+        // Sans surensemble disponible, la méthode doit retourner le jeu de caractères original.
         assertEquals(detected, result);
+    }
+    @Test 
+    public void decodeAsReturnsNullWhenInputIsNull() { 
+        Charset detected = null; 
+        Charset result = CharsetSupersets.decodeAs(detected); 
+        // La méthode doit retourner null lorsque l'entrée est null. 
+        assertNull(result);
     }
 }

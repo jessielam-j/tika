@@ -1,0 +1,41 @@
+package org.apache.tika.detect;
+
+import org.apache.tika.detect.CharsetSupersets;
+import java.lang.reflect.Field;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.Collections;
+import org.mockito.*;
+import org.junit.jupiter.api.*;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+@ExtendWith(MockitoExtension.class)
+public class CharsetSupersets_supersetOf_0_1_Test {
+
+    @Test
+    public void testSupersetOf() throws Exception {
+        // Create a mock SUPERSET_MAP
+        Map<String, String> mockSupersetMap = new HashMap<>();
+        mockSupersetMap.put("ISO-8859-1", "UTF-8");
+        Field supersetMapField = CharsetSupersets.class.getDeclaredField("SUPERSET_MAP");
+        supersetMapField.setAccessible(true);
+        supersetMapField.set(null, Collections.unmodifiableMap(mockSupersetMap));
+        // Test with a supported charset
+        assertEquals("UTF-8", CharsetSupersets.supersetOf(Charset.forName("ISO-8859-1")).name());
+        // Test with an unsupported charset
+        assertNull(CharsetSupersets.supersetOf(Charset.forName("UTF-8")));
+        // Test with null input
+        assertNull(CharsetSupersets.supersetOf(null));
+    }
+}
+
+--------------------------------------------
+Error in CharsetSupersets_supersetOf_0_1_Test: line 8 : package org.mockito.junit.jupiter does not exist
+Error in CharsetSupersets_supersetOf_0_1_Test: line 12 : package org.mockito does not exist
+Error in CharsetSupersets_supersetOf_0_1_Test: line 10 : package org.mockito does not exist
+Error in CharsetSupersets_supersetOf_0_1_Test: line 16 : cannot find symbol
+  symbol: class MockitoExtension

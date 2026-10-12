@@ -1,0 +1,92 @@
+package org.apache.tika.detect;
+
+import org.apache.tika.detect.CharsetSupersets;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import java.nio.charset.Charset;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import org.mockito.*;
+import org.junit.jupiter.api.*;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+@ExtendWith(MockitoExtension.class)
+class CharsetSupersets_supersetOf_0_3_Test {
+
+    @Test
+    void supersetOf_nullInput_shouldReturnNull() {
+        assertNull(CharsetSupersets.supersetOf(null));
+    }
+
+    @ParameterizedTest
+    @MethodSource("validCharsets")
+    void supersetOf_validInput_shouldReturnCorrectCharset(Charset detected, Charset expected) {
+        assertEquals(expected, CharsetSupersets.supersetOf(detected));
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidCharsets")
+    void supersetOf_invalidInput_shouldReturnNull(Charset detected) {
+        assertNull(CharsetSupersets.supersetOf(detected));
+    }
+
+    private static Stream<Arguments> validCharsets() {
+        return Stream.of(Arguments.of(Charset.forName("UTF-8"), Charset.forName("UTF-16")), Arguments.of(Charset.forName("ISO-8859-1"), Charset.forName("UTF-8")), Arguments.of(Charset.forName("US-ASCII"), Charset.forName("UTF-8")));
+    }
+
+    private static Stream<Arguments> invalidCharsets() {
+        return Stream.of(Arguments.of(Charset.forName("UTF-7")), Arguments.of(Charset.forName("UTF-32")), Arguments.of(Charset.forName("GB18030")));
+    }
+}
+
+--------------------------------------------
+Error in CharsetSupersets_supersetOf_0_3_Test: line 4 : package org.junit.jupiter.params does not exist
+Error in CharsetSupersets_supersetOf_0_3_Test: line 5 : package org.junit.jupiter.params.provider does not exist
+Error in CharsetSupersets_supersetOf_0_3_Test: line 6 : package org.junit.jupiter.params.provider does not exist
+Error in CharsetSupersets_supersetOf_0_3_Test: line 10 : package org.mockito.junit.jupiter does not exist
+Error in CharsetSupersets_supersetOf_0_3_Test: line 16 : package org.mockito does not exist
+Error in CharsetSupersets_supersetOf_0_3_Test: line 39 : cannot find symbol
+  symbol:   class Arguments
+  location: class org.apache.tika.detect.CharsetSupersets_supersetOf_0_3_Test
+Error in CharsetSupersets_supersetOf_0_3_Test: line 43 : cannot find symbol
+  symbol:   class Arguments
+  location: class org.apache.tika.detect.CharsetSupersets_supersetOf_0_3_Test
+Error in CharsetSupersets_supersetOf_0_3_Test: line 14 : package org.mockito does not exist
+Error in CharsetSupersets_supersetOf_0_3_Test: line 19 : cannot find symbol
+  symbol: class MockitoExtension
+Error in CharsetSupersets_supersetOf_0_3_Test: line 27 : cannot find symbol
+  symbol:   class ParameterizedTest
+  location: class org.apache.tika.detect.CharsetSupersets_supersetOf_0_3_Test
+Error in CharsetSupersets_supersetOf_0_3_Test: line 28 : cannot find symbol
+  symbol:   class MethodSource
+  location: class org.apache.tika.detect.CharsetSupersets_supersetOf_0_3_Test
+Error in CharsetSupersets_supersetOf_0_3_Test: line 33 : cannot find symbol
+  symbol:   class ParameterizedTest
+  location: class org.apache.tika.detect.CharsetSupersets_supersetOf_0_3_Test
+Error in CharsetSupersets_supersetOf_0_3_Test: line 34 : cannot find symbol
+  symbol:   class MethodSource
+  location: class org.apache.tika.detect.CharsetSupersets_supersetOf_0_3_Test
+Error in CharsetSupersets_supersetOf_0_3_Test: line 40 : cannot find symbol
+  symbol:   variable Arguments
+  location: class org.apache.tika.detect.CharsetSupersets_supersetOf_0_3_Test
+Error in CharsetSupersets_supersetOf_0_3_Test: line 40 : cannot find symbol
+  symbol:   variable Arguments
+  location: class org.apache.tika.detect.CharsetSupersets_supersetOf_0_3_Test
+Error in CharsetSupersets_supersetOf_0_3_Test: line 40 : cannot find symbol
+  symbol:   variable Arguments
+  location: class org.apache.tika.detect.CharsetSupersets_supersetOf_0_3_Test
+Error in CharsetSupersets_supersetOf_0_3_Test: line 44 : cannot find symbol
+  symbol:   variable Arguments
+  location: class org.apache.tika.detect.CharsetSupersets_supersetOf_0_3_Test
+Error in CharsetSupersets_supersetOf_0_3_Test: line 44 : cannot find symbol
+  symbol:   variable Arguments
+  location: class org.apache.tika.detect.CharsetSupersets_supersetOf_0_3_Test
+Error in CharsetSupersets_supersetOf_0_3_Test: line 44 : cannot find symbol
+  symbol:   variable Arguments
+  location: class org.apache.tika.detect.CharsetSupersets_supersetOf_0_3_Test

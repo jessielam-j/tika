@@ -1,0 +1,45 @@
+package org.apache.tika.detect;
+
+import org.apache.tika.detect.CharsetSupersets;
+import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import org.mockito.*;
+import org.junit.jupiter.api.*;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+class CharsetSupersets_supersetOf_0_0_Test {
+
+    @Test
+    void testSupersetOfNull() {
+        assertNull(CharsetSupersets.supersetOf(null));
+    }
+
+    @Test
+    void testSupersetOfEmpty() {
+        assertNull(CharsetSupersets.supersetOf(Charset.forName("")));
+    }
+
+    @Test
+    void testSupersetOfNonExistent() {
+        assertNull(CharsetSupersets.supersetOf(Charset.forName("non-existent")));
+    }
+
+    @Test
+    void testSupersetOfExistent() {
+        Map<String, String> supersetMap = new HashMap<>();
+        supersetMap.put("UTF-8", "UTF-16");
+        CharsetSupersets.SUPERSET_MAP = Collections.unmodifiableMap(supersetMap);
+        assertEquals(Charset.forName("UTF-16"), CharsetSupersets.supersetOf(Charset.forName("UTF-8")));
+    }
+}
+
+--------------------------------------------
+Error in CharsetSupersets_supersetOf_0_0_Test: line 10 : package org.mockito does not exist
+Error in CharsetSupersets_supersetOf_0_0_Test: line 13 : package org.mockito.junit.jupiter does not exist
+Error in CharsetSupersets_supersetOf_0_0_Test: line 8 : package org.mockito does not exist
+Error in CharsetSupersets_supersetOf_0_0_Test: line 36 : cannot assign a value to static final variable SUPERSET_MAP

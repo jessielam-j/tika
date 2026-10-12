@@ -1,0 +1,70 @@
+package org.apache.tika.detect;
+
+import org.apache.tika.detect.CharsetSupersets;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.Collections;
+import org.mockito.*;
+import org.junit.jupiter.api.*;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+@ExtendWith(MockitoExtension.class)
+public class CharsetSupersets_decodeAs_1_2_Test {
+
+    @Mock
+    private Charset detected;
+
+    @Test
+    public void testDecodeAs() throws Exception {
+        Map<String, String> supersetMap = new HashMap<>();
+        supersetMap.put("UTF-8", "UTF-16");
+        supersetMap.put("ISO-8859-1", "UTF-8");
+        supersetMap.put("ASCII", "UTF-8");
+        CharsetSupersets.SUPERSET_MAP = Collections.unmodifiableMap(supersetMap);
+        CharsetSupersets charsetSupersets = CharsetSupersets.class.newInstance();
+        Method decodeAsMethod = CharsetSupersets.class.getDeclaredMethod("decodeAs", Charset.class);
+        decodeAsMethod.setAccessible(true);
+        // Test with null input
+        assertNull(decodeAsMethod.invoke(charsetSupersets, (Charset) null));
+        // Test with UTF-8 input
+        assertEquals("UTF-16", decodeAsMethod.invoke(charsetSupersets, detected).toString());
+        verify(detected).name();
+        // Test with ISO-8859-1 input
+        assertEquals("UTF-8", decodeAsMethod.invoke(charsetSupersets, detected).toString());
+        verify(detected).name();
+        // Test with ASCII input
+        assertEquals("UTF-8", decodeAsMethod.invoke(charsetSupersets, detected).toString());
+        verify(detected).name();
+        // Test with unknown input
+        assertNull(decodeAsMethod.invoke(charsetSupersets, Charset.forName("UNKNOWN")));
+    }
+}
+
+--------------------------------------------
+Error in CharsetSupersets_decodeAs_1_2_Test: line 8 : package org.mockito.junit.jupiter does not exist
+Error in CharsetSupersets_decodeAs_1_2_Test: line 12 : package org.mockito does not exist
+Error in CharsetSupersets_decodeAs_1_2_Test: line 10 : package org.mockito does not exist
+Error in CharsetSupersets_decodeAs_1_2_Test: line 15 : cannot find symbol
+  symbol: class MockitoExtension
+Error in CharsetSupersets_decodeAs_1_2_Test: line 18 : cannot find symbol
+  symbol:   class Mock
+  location: class org.apache.tika.detect.CharsetSupersets_decodeAs_1_2_Test
+Error in CharsetSupersets_decodeAs_1_2_Test: line 27 : cannot assign a value to static final variable SUPERSET_MAP
+Error in CharsetSupersets_decodeAs_1_2_Test: line 29 : cannot find symbol
+  symbol:   class Method
+  location: class org.apache.tika.detect.CharsetSupersets_decodeAs_1_2_Test
+Error in CharsetSupersets_decodeAs_1_2_Test: line 35 : cannot find symbol
+  symbol:   method verify(java.nio.charset.Charset)
+  location: class org.apache.tika.detect.CharsetSupersets_decodeAs_1_2_Test
+Error in CharsetSupersets_decodeAs_1_2_Test: line 38 : cannot find symbol
+  symbol:   method verify(java.nio.charset.Charset)
+  location: class org.apache.tika.detect.CharsetSupersets_decodeAs_1_2_Test
+Error in CharsetSupersets_decodeAs_1_2_Test: line 41 : cannot find symbol
+  symbol:   method verify(java.nio.charset.Charset)
+  location: class org.apache.tika.detect.CharsetSupersets_decodeAs_1_2_Test
+Error in CharsetSupersets_decodeAs_1_2_Test: line -1 : CharsetSupersets_decodeAs_1_2_Test.java uses or overrides a deprecated API.
+Error in CharsetSupersets_decodeAs_1_2_Test: line -1 : Recompile with -Xlint:deprecation for details.

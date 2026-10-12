@@ -1,0 +1,20 @@
+{
+  "method0": {
+    "methodName": "supersetOf",
+    "signature": "supersetOf(Charset)",
+    "className": "CharsetSupersets",
+    "packageName": "org.apache.tika.detect"
+  },
+  "method1": {
+    "methodName": "decodeAs",
+    "signature": "decodeAs(Charset)",
+    "className": "CharsetSupersets",
+    "packageName": "org.apache.tika.detect"
+  },
+  "method2": {
+    "methodName": "CharsetSupersets",
+    "signature": "CharsetSupersets()",
+    "className": "CharsetSupersets",
+    "packageName": "org.apache.tika.detect"
+  }
+}

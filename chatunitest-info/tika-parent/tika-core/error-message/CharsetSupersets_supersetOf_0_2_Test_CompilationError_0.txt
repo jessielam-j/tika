@@ -1,0 +1,44 @@
+package org.apache.tika.detect;
+
+import org.apache.tika.detect.CharsetSupersets;
+import java.lang.reflect.Field;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+import org.mockito.*;
+import org.junit.jupiter.api.*;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.Collections;
+
+class CharsetSupersets_supersetOf_0_2_Test {
+
+    private static final Map<String, String> SUPERSET_MAP = new HashMap<>();
+
+    static {
+        SUPERSET_MAP.put("ISO-8859-1", "ISO-8859-15");
+        SUPERSET_MAP.put("US-ASCII", "UTF-8");
+        SUPERSET_MAP.put("UTF-8", "UTF-16");
+        SUPERSET_MAP.put("UTF-16", "UTF-32");
+    }
+
+    @Test
+    void testSupersetOf() throws Exception {
+        Field field = CharsetSupersets.class.getDeclaredField("SUPERSET_MAP");
+        field.setAccessible(true);
+        field.set(null, SUPERSET_MAP);
+        assertEquals("ISO-8859-15", CharsetSupersets.supersetOf(Charset.forName("ISO-8859-1")).name());
+        assertEquals("UTF-8", CharsetSupersets.supersetOf(Charset.forName("US-ASCII")).name());
+        assertEquals("UTF-16", CharsetSupersets.supersetOf(Charset.forName("UTF-8")).name());
+        assertEquals("UTF-32", CharsetSupersets.supersetOf(Charset.forName("UTF-16")).name());
+        assertNull(CharsetSupersets.supersetOf(null));
+        assertNull(CharsetSupersets.supersetOf(Charset.forName("UNKNOWN")));
+    }
+}
+
+--------------------------------------------
+Error in CharsetSupersets_supersetOf_0_2_Test: line 10 : package org.mockito does not exist
+Error in CharsetSupersets_supersetOf_0_2_Test: line 13 : package org.mockito.junit.jupiter does not exist
+Error in CharsetSupersets_supersetOf_0_2_Test: line 8 : package org.mockito does not exist

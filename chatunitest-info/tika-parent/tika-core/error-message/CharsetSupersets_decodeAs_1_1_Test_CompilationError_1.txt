@@ -1,0 +1,49 @@
+package org.apache.tika.detect;
+
+import org.apache.tika.detect.CharsetSupersets;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+import org.mockito.*;
+import org.junit.jupiter.api.*;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.Collections;
+
+class CharsetSupersets_decodeAs_1_1_Test {
+
+    private static final Map<String, String> SUPERSET_MAP = new HashMap<>();
+
+    @BeforeEach
+    void setUp() {
+        SUPERSET_MAP.put("UTF-8", "UTF-16");
+        SUPERSET_MAP.put("ISO-8859-1", "UTF-8");
+        SUPERSET_MAP.put("US-ASCII", "UTF-8");
+        SUPERSET_MAP.put("UTF-16", "UTF-32");
+        SUPERSET_MAP.put("UTF-32", "UTF-8");
+        SUPERSET_MAP.put("ISO-8859-2", "UTF-8");
+    }
+
+    @Test
+    void testDecodeAs() {
+        Charset detected = Charset.forName("ISO-8859-1");
+        Charset expected = Charset.forName("UTF-8");
+        Charset result = CharsetSupersets.decodeAs(detected);
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void testDecodeAsWithNullDetected() {
+        Charset detected = null;
+        Charset expected = null;
+        Charset result = CharsetSupersets.decodeAs(detected);
+        assertEquals(expected, result);
+    }
+}
+
+--------------------------------------------
+Error in CharsetSupersets_decodeAs_1_1_Test: line 9 : package org.mockito does not exist
+Error in CharsetSupersets_decodeAs_1_1_Test: line 12 : package org.mockito.junit.jupiter does not exist
+Error in CharsetSupersets_decodeAs_1_1_Test: line 7 : package org.mockito does not exist

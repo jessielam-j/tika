@@ -1,0 +1,38 @@
+{
+  "attempt0": {
+    "testClassName": "CharsetSupersets_decodeAs_1_0_Test",
+    "fullName": "org.apache.tika.detect.CharsetSupersets_decodeAs_1_0_Test",
+    "path": "C:\\Users\\sarah\\Desktop\\uni\\IFT3913\\tika\\tests-generes\\tika-parent\\tika-core\\org\\apache\\tika\\detect\\CharsetSupersets_decodeAs_1_0_Test.java",
+    "className": "CharsetSupersets",
+    "packageName": "org.apache.tika.detect",
+    "methodName": "decodeAs",
+    "methodSig": "decodeAs(Charset)"
+  },
+  "attempt1": {
+    "testClassName": "CharsetSupersets_decodeAs_1_1_Test",
+    "fullName": "org.apache.tika.detect.CharsetSupersets_decodeAs_1_1_Test",
+    "path": "C:\\Users\\sarah\\Desktop\\uni\\IFT3913\\tika\\tests-generes\\tika-parent\\tika-core\\org\\apache\\tika\\detect\\CharsetSupersets_decodeAs_1_0_Test.java",
+    "className": "CharsetSupersets",
+    "packageName": "org.apache.tika.detect",
+    "methodName": "decodeAs",
+    "methodSig": "decodeAs(Charset)"
+  },
+  "attempt2": {
+    "testClassName": "CharsetSupersets_decodeAs_1_2_Test",
+    "fullName": "org.apache.tika.detect.CharsetSupersets_decodeAs_1_2_Test",
+    "path": "C:\\Users\\sarah\\Desktop\\uni\\IFT3913\\tika\\tests-generes\\tika-parent\\tika-core\\org\\apache\\tika\\detect\\CharsetSupersets_decodeAs_1_0_Test.java",
+    "className": "CharsetSupersets",
+    "packageName": "org.apache.tika.detect",
+    "methodName": "decodeAs",
+    "methodSig": "decodeAs(Charset)"
+  },
+  "attempt3": {
+    "testClassName": "CharsetSupersets_decodeAs_1_3_Test",
+    "fullName": "org.apache.tika.detect.CharsetSupersets_decodeAs_1_3_Test",
+    "path": "C:\\Users\\sarah\\Desktop\\uni\\IFT3913\\tika\\tests-generes\\tika-parent\\tika-core\\org\\apache\\tika\\detect\\CharsetSupersets_decodeAs_1_0_Test.java",
+    "className": "CharsetSupersets",
+    "packageName": "org.apache.tika.detect",
+    "methodName": "decodeAs",
+    "methodSig": "decodeAs(Charset)"
+  }
+}

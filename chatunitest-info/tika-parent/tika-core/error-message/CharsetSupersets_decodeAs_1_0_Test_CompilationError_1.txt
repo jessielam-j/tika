@@ -1,0 +1,65 @@
+package org.apache.tika.detect;
+
+import org.apache.tika.detect.CharsetSupersets;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.Collections;
+import org.mockito.*;
+import org.junit.jupiter.api.*;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+@ExtendWith(MockitoExtension.class)
+public class CharsetSupersets_decodeAs_1_0_Test {
+
+    @Mock
+    private CharsetSupersets charsetSupersets;
+
+    @Test
+    public void testDecodeAs() throws Exception {
+        // Create a mock superset map
+        Map<String, String> mockSupersetMap = new HashMap<>();
+        mockSupersetMap.put("UTF-8", "UTF-16");
+        mockSupersetMap.put("ISO-8859-1", "UTF-8");
+        mockSupersetMap.put("US-ASCII", "UTF-8");
+        mockSupersetMap.put("ISO-2022-JP", "UTF-8");
+        mockSupersetMap.put("ISO-2022-JP-2", "UTF-8");
+        mockSupersetMap.put("ISO-2022-JP-3", "UTF-8");
+        mockSupersetMap.put("ISO-2022-KR", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-2", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-3", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-4", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-5", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-6", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-7", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-8", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-9", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-10", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-11", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-12", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-13", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-14", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-15", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-16", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-17", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-18", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-19", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-20", "UTF-8");
+        mockSupersetMap.put("ISO-2022-CN-EXT-21", "UTF-8");
+    }
+}
+
+--------------------------------------------
+Error in CharsetSupersets_decodeAs_1_0_Test: line 8 : package org.mockito.junit.jupiter does not exist
+Error in CharsetSupersets_decodeAs_1_0_Test: line 12 : package org.mockito does not exist
+Error in CharsetSupersets_decodeAs_1_0_Test: line 10 : package org.mockito does not exist
+Error in CharsetSupersets_decodeAs_1_0_Test: line 15 : cannot find symbol
+  symbol: class MockitoExtension
+Error in CharsetSupersets_decodeAs_1_0_Test: line 18 : cannot find symbol
+  symbol:   class Mock
+  location: class org.apache.tika.detect.CharsetSupersets_decodeAs_1_0_Test

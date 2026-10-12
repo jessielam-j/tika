@@ -1,0 +1,71 @@
+package org.apache.tika.detect;
+
+import org.apache.tika.detect.CharsetSupersets;
+import java.lang.reflect.Field;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.Collections;
+import org.mockito.*;
+import org.junit.jupiter.api.*;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+@ExtendWith(MockitoExtension.class)
+public class CharsetSupersets_decodeAs_1_3_Test {
+
+    private CharsetSupersets charsetSupersets;
+
+    private Field supersetMapField;
+
+    @BeforeEach
+    public void setUp() throws NoSuchFieldException {
+        charsetSupersets = new CharsetSupersets();
+        supersetMapField = CharsetSupersets.class.getDeclaredField("SUPERSET_MAP");
+        supersetMapField.setAccessible(true);
+    }
+
+    @Test
+    public void testDecodeAsWithNullCharset() {
+        Charset result = charsetSupersets.decodeAs(null);
+        assertEquals(null, result);
+    }
+
+    @Test
+    public void testDecodeAsWithNonExistentCharset() {
+        Map<String, String> supersetMap = new HashMap<>();
+        supersetMap.put("UTF-8", "UTF-8");
+        supersetMapField.set(null, Collections.unmodifiableMap(supersetMap));
+        Charset result = charsetSupersets.decodeAs(Charset.forName("UTF-16"));
+        assertEquals(Charset.forName("UTF-16"), result);
+    }
+
+    @Test
+    public void testDecodeAsWithExistentCharset() {
+        Map<String, String> supersetMap = new HashMap<>();
+        supersetMap.put("UTF-8", "UTF-16");
+        supersetMapField.set(null, Collections.unmodifiableMap(supersetMap));
+        Charset result = charsetSupersets.decodeAs(Charset.forName("UTF-8"));
+        assertEquals(Charset.forName("UTF-16"), result);
+    }
+
+    @Test
+    public void testDecodeAsWithExistentCharsetAndSuperset() {
+        Map<String, String> supersetMap = new HashMap<>();
+        supersetMap.put("UTF-8", "UTF-16");
+        supersetMap.put("ISO-8859-1", "UTF-8");
+        supersetMapField.set(null, Collections.unmodifiableMap(supersetMap));
+        Charset result = charsetSupersets.decodeAs(Charset.forName("ISO-8859-1"));
+        assertEquals(Charset.forName("UTF-8"), result);
+    }
+}
+
+--------------------------------------------
+Error in CharsetSupersets_decodeAs_1_3_Test: line 8 : package org.mockito.junit.jupiter does not exist
+Error in CharsetSupersets_decodeAs_1_3_Test: line 12 : package org.mockito does not exist
+Error in CharsetSupersets_decodeAs_1_3_Test: line 10 : package org.mockito does not exist
+Error in CharsetSupersets_decodeAs_1_3_Test: line 16 : cannot find symbol
+  symbol: class MockitoExtension
+Error in CharsetSupersets_decodeAs_1_3_Test: line 25 : CharsetSupersets() has private access in org.apache.tika.detect.CharsetSupersets

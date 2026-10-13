@@ -48,16 +48,16 @@ La commande suivante a été utilisée pour lancer la génération :
 mvn -f tika-core/pom.xml chatunitest:class "-DselectClass=org.apache.tika.detect.CharsetSupersets" "-DtestOutput=C:\Users\sarah\Desktop\uni\IFT3913\tika\tests-generes" "-DtmpOutput=C:\Users\sarah\Desktop\uni\IFT3913\tika\chatunitest-info" "-DtestNumber=4" "-DmaxRounds=2" "-Dthread=false"
 ```
 
-La configuration demandait quatre tests par méthode, avec un maximum de deux rondes de correction. L’exécution a rencontré certaines difficultés, notamment des erreurs de compilation dans les tests générés, des problèmes liés aux dépendances et des limites de mémoire qui ont compliqué la génération et la correction des tests.
+La commande utilisait le paramètre `-DtestNumber=4` et limitait le nombre de rondes de correction à deux avec `-DmaxRounds=2`. L’exécution a rencontré certaines difficultés, notamment des erreurs de compilation dans les tests générés, des problèmes liés aux dépendances et des limites de mémoire qui ont compliqué la génération et la correction des tests.
 
 ### Résultats de la génération des tests IA
 
 Les résultats observés étaient les suivants :
 
-* ChatUniTest a traité les méthodes `supersetOf(Charset)` et `decodeAs(Charset)`
-* Des tentatives de génération et de correction ont été enregistrées dans les fichiers d'historique
-* Aucun fichier de test Java utilisable n'a été retrouvé dans le dossier `tests-generes`
-* Plusieurs messages d'erreur de compilation ont été conservés dans `chatunitest-info`
+* ChatUniTest a tenté de générer des tests pour les méthodes `supersetOf(Charset)` et `decodeAs(Charset)`.
+* Des tentatives de génération et de correction ont été enregistrées dans les fichiers d'historique.
+* Aucun fichier de test Java utilisable n'a été créé dans le dossier `tests-generes`.
+* Des extraits de tests générés ainsi que des messages d'erreur ont été retrouvés dans les fichiers `error-message`, situés dans le dossier `chatunitest-info`.
 
 La génération a donc été exécutée, mais aucun test généré n'a pu être intégré directement à la suite de tests.
 
@@ -120,18 +120,23 @@ En supposant que la méthode testée retournerait `null`. Pourtant, `Charset.for
 
 ChatUniTest a essayé de corriger les erreurs, mais les problèmes principaux, comme le constructeur privé et la modification de `SUPERSET_MAP`, sont restés.
 
-### Évaluation des tests générés
+### Analyse des oracles des tests générés
 
-ChatUniTest a proposé quelques scénarios pertinents, comme les entrées null, la présence d'un surensemble et son absence. 
-Cependant, plusieurs tests contenaient des erreurs de compilation ou des résultats attendus incorrects. Certains tentaient aussi de modifier la configuration interne de la classe.
+Les tests générés par ChatUniTest contenaient plusieurs oracles, principalement sous la forme d'assertions `assertEquals()` et `assertNull()`. Ces assertions définissaient les résultats attendus pour les méthodes testées.
+
+Certains oracles correspondaient à des scénarios pertinents. Par exemple, plusieurs tests vérifiaient que `decodeAs()` retourne le surensemble attendu ou `null` lorsque l'entrée est `null`. Un autre test utilisait plusieurs jeux de caractères pour vérifier les résultats de `supersetOf()`.
+
+Cependant, certains résultats proposés devaient être vérifiés par rapport au fonctionnement réel de la classe. De plus, plusieurs tests tentaient de modifier `SUPERSET_MAP`, dont la déclaration est `static final`, ou utilisaient des dépendances absentes de l'environnement de compilation.
+
+Ainsi, même lorsque les assertions étaient pertinentes, les erreurs de compilation empêchaient d'exécuter les tests et de vérifier leurs résultats. Il n'a donc pas été possible de confirmer expérimentalement la validité des oracles générés.
 
 ## Analyse de mutation avec PITest
 
 Le score de mutation est calculé comme :
 
-Score de mutation = (Nombre de mutants tués / Nombre de mutants évalués) × 100 %
+Score de mutation = (Nombre de mutants tués / Nombre total de mutants générés) × 100 %
 
-Les mutants non-couverts ne sont pas comptés parmi les mutants évalués dans ce calcul.
+Un mutant est tué lorsqu'un test détecte la modification introduite. Un mutant non couvert n'est pas tué et contribue donc à diminuer le score de mutation.
 
 ### Configuration et commande
 
@@ -153,7 +158,7 @@ Avant l'ajout des tests manuels, les résultats étaient :
 | Mutants tués                 |            3 |
 | Mutants sans couverture      |            2 |
 | Score de mutation            |         60 % |
-| Couverture des lignes mutées | 15/21 (71 %) |
+| Couverture des lignes        | 15/21 (71 %) |
 
 Les trois premiers mutants ont été tués par les tests existants. Ils concernaient des conditions et le remplacement d'une valeur de retour par `null`.
 
@@ -180,12 +185,12 @@ Les résultats finaux étaient :
 | Mutants survivants               |              0 |
 | Mutants sans couverture          |              0 |
 | Score de mutation                |          100 % |
-| Couverture des lignes mutées     |   17/21 (81 %) |
+| Couverture des lignes            |   17/21 (81 %) |
 | Tests exécutés, selon le rapport |              8 |
 
 Les deux mutants qui n'étaient pas couverts lors de la première analyse ont été tués après l'ajout des deux premiers tests manuels. Le troisième test vérifie le comportement de la méthode lorsque l'entrée est `null`.
 
-Le score de mutation est ainsi passé de 60 % à 100 % après l'ajout des tests manuels. L'ajout du troisième test n'a pas modifié ce score, puisque les cinq mutants étaient déjà tués. La couverture des lignes mutées est restée à 81 %.
+Le score de mutation est ainsi passé de 60 % à 100 % après l'ajout des tests manuels. L'ajout du troisième test n'a pas modifié ce score, puisque les cinq mutants étaient déjà tués. La couverture des lignesest passée de 71 % à 81 %.
 
 ## Tests ajoutés manuellement
 
@@ -270,28 +275,25 @@ Ce test vérifie un cas limite important. Comme `decodeAs()` appelle `supersetOf
 
 ## Comparaison entre les tests générés et les tests manuels
 
-| Critère                     | Tests générés par ChatUniTest                                           | Tests manuels                                                                |
-| --------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Scénarios proposés          | Certains scénarios pertinents                                           | Trois cas vérifiés explicitement                                             |
-| Compilation                 | Échec pour les tentatives examinées                                     | Réussie                                                                      |
-| Exécution                   | Aucun test généré utilisable                                            | Les trois tests ont réussi                                                   |
-| Assertions                  | Certaines assertions pertinentes, mais plusieurs hypothèses incorrectes | Résultats attendus explicites                                                |
-| Utilisation des dépendances | Imports Mockito inutiles ou manquants                                   | Pas de dépendance Mockito nécessaire                                         |
-| Résultat de mutation        | Aucun score indépendant mesuré pour des tests générés exécutables       | Les cinq mutants sont tués avec l'ensemble des tests, dont les tests manuels |
+| Critère | Tests générés par ChatUniTest | Tests manuels |
+|---|---|---|
+| Scénarios proposés | Certains scénarios pertinents, notamment le traitement d'une entrée `null` et la recherche d'un surensemble. | Trois scénarios ciblés : un surensemble disponible, l'absence de surensemble et une entrée `null`. |
+| Oracles | Plusieurs assertions pertinentes, comme `assertEquals()` et `assertNull()`. Certains résultats attendus devaient toutefois être vérifiés par rapport au comportement réel de la classe. | Résultats attendus définis explicitement et vérifiés par l'exécution des tests. |
+| Compilation | Échec pour les tests examinés, notamment à cause de dépendances manquantes et de tentatives de modification de `SUPERSET_MAP`. | Réussie. |
+| Exécution | Aucun test généré exploitable n'a pu être exécuté pour confirmer les résultats attendus. | Les trois tests ont réussi. |
+| Utilisation des dépendances | Imports Mockito manquants ou inutiles et problèmes liés à certaines fonctionnalités de JUnit. | Aucune dépendance Mockito nécessaire. |
+| Résultat de mutation | Aucun score de mutation indépendant n'a pu être mesuré pour les tests générés, puisqu'ils n'étaient pas exécutables. | Avec l'ensemble des tests exécutés, les cinq mutants ont été tués, pour un score de mutation de 100 %. |
 
-Cette comparaison montre que l'IA peut proposer des idées de scénarios utiles, mais que les tests doivent être vérifiés avant d'être utilisés. 
-Dans ce cas, les erreurs de compilation et les hypothèses incorrectes ont empêché une évaluation directe des tests générés.
-Ainsi, les tests manuels ont été plus faciles à valider parce qu'ils s'appuient directement sur le fonctionnement réel de la classe et sur des résultats attendus précis.
+Cette comparaison montre que l'IA peut proposer des idées de scénarios utiles, mais que les tests doivent être vérifiés avant d'être utilisés. Dans ce cas, les erreurs de compilation ont empêché l'exécution des tests et la validation de leurs oracles. Les tests manuels ont pu être exécutés avec succès et leurs résultats attendus ont été vérifiés, ce qui souligne l'importance de vérifier les oracles, la compilation des tests et leur exécution.
 
 ## Fichiers
 
 * **Classe étudiée :** `tika-core/src/main/java/org/apache/tika/detect/CharsetSupersets.java`
 * **Classe de tests :** `tika-core/src/test/java/org/apache/tika/detect/CharsetSupersetsTest.java`
 * **Configuration des plugins :** `tika-core/pom.xml`
-* **Sortie prévue des tests générés :** `tests-generes`
-* **Historique et erreurs de ChatUniTest :** `chatunitest-info`
+* **Historique, extraits de tests générés et erreurs de ChatUniTest :** `error-message` et `records.json` dans `chatunitest-info`
 
 ## Déclaration de l'usage d'IA
 
-* L'utilisation de ChatUniTest (via Ollama) : modèle `codequen:v1.5-chat` a permis de générer de nouveaux tests, comme demandé dans l'énoncé.
+* L'utilisation de ChatUniTest (via Ollama) : modèle `codeqwen:v1.5-chat` a permis de générer de nouveaux tests, comme demandé dans l'énoncé.
 * L'utilisation de ChatGPT, en octobre 2026 : comprendre les erreurs rencontrées avec PITest, Maven et ChatUniTest, et d'interpréter les résultats de l'analyse de mutation.

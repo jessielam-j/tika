@@ -39,6 +39,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.security.MessageDigest;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+import java.util.Random;
+
 import org.apache.commons.io.IOUtils;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -709,4 +717,46 @@ public abstract class TikaTest {
             }
         }
     }
+    
+    // =========================================================================
+    // Démonstration SAST : 7 vulnérabilités de types distincts pour Semgrep
+    // =========================================================================
+
+    // 1. Injection SQL (OWASP A03 / Rule: java.lang.security.audit.sqli.jdbc-sqli)
+    public void secVuln_sqlInjection(String input) throws Exception {
+        Connection conn = DriverManager.getConnection("jdbc:h2:mem:test", "sa", "");
+        Statement stmt = conn.createStatement();
+        stmt.executeQuery("SELECT * FROM documents WHERE id = '" + input + "'");
+    }
+
+
+
+    // 3. Désérialisation non sécurisée (OWASP A08 / Rule: java.lang.security.audit.objectinputstream-deserialization)
+    public Object secVuln_insecureDeserialization(InputStream stream) throws Exception {
+        ObjectInputStream ois = new ObjectInputStream(stream);
+        return ois.readObject();
+    }
+
+    // 4. Algorithme de hachage faible / MD5 (OWASP A02 / Rule: java.lang.security.audit.crypto.use-of-md5)
+    public byte[] secVuln_weakHash(byte[] content) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        return md.digest(content);
+    }
+
+    // 5. Générateur aléatoire prédictible (OWASP A02 / Rule: java.lang.security.audit.crypto.weak-random)
+    public int secVuln_insecureRandom() {
+        Random rng = new Random();
+        return rng.nextInt();
+    }
+
+    // 6. Traversée de répertoire / Path Traversal (OWASP A01 / Rule: java.lang.security.audit.path-traversal)
+    public File secVuln_pathTraversal(String filename) {
+        return new File("/tmp/tika-storage/" + filename);
+    }
+
+    // 7. Secret / Clé d'API codée en dur (OWASP A07 / Rule: generic.secrets...)
+    public String secVuln_hardcodedSecret() {
+        return "AKIAIOSFODNN7EXAMPLE_SECRET_KEY_1234567890";
+    }
+
 }

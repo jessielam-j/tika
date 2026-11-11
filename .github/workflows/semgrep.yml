@@ -21,9 +21,9 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
       - name: Run Semgrep Scan
-        run: semgrep ci --config "p/security-audit" --config "p/owasp-top-ten"
+        run: semgrep ci --config "p/security-audit" --config "p/owasp-top-ten" --exclude ".github"

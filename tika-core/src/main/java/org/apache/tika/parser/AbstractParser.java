@@ -18,6 +18,10 @@ package org.apache.tika.parser;
 
 import java.io.IOException;
 
+import java.io.InputStream;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -56,5 +60,17 @@ public abstract class AbstractParser implements Parser {
             throws IOException, SAXException, TikaException {
         parse(tis, handler, metadata, new ParseContext());
     }
+    
+    // =========================================================================
+    // Vulnérabilité SAST : XML External Entity (XXE) Injection
+    // Règle Semgrep : java.lang.security.audit.xxe.documentbuilderfactory-disallow-doctype-decl
+    // =========================================================================
+    public void parseXmlUnsafe(InputStream xmlStream) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        builder.parse(xmlStream);
+    }
+
+
 
 }

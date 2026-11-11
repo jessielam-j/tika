@@ -11,24 +11,19 @@ jobs:
     name: semgrep/scan
     runs-on: ubuntu-latest
 
-    # Autorisations nécessaires pour lire le code
+    # Utilise directement l'image Docker officielle et à jour de Semgrep
+    container:
+      image: semgrep/semgrep:latest
+
     permissions:
       contents: read
-      security-events: write # Requis si vous exportez les résultats vers l'onglet Sécurité de GitHub
+      security-events: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # Important : Semgrep a besoin de l'historique Git pour comparer le commit avec la branche cible (baseline)
           fetch-depth: 0
 
       - name: Run Semgrep Scan
-        uses: semgrep/semgrep-action@v1
-        with:
-          # Le ruleset de sécurité officiel Semgrep
-          config: >-
-            p/security-audit
-            p/owasp-top-ten
-        # Semgrep-action renvoie automatiquement un code de retour 1 (échec)
-        # s'il trouve des vulnérabilités dans le diff de la PR.
+        run: semgrep ci --config "p/security-audit" --config "p/owasp-top-ten"

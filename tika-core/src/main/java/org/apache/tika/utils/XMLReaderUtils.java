@@ -42,6 +42,9 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.input.UnsynchronizedByteArrayInputStream;
 import org.slf4j.Logger;
@@ -1302,5 +1305,16 @@ public class XMLReaderUtils implements Serializable {
         }
 
         return XMLReaderUtils.getTransformer();
+    }
+
+    // =========================================================================
+    // Vulnérabilité SAST 1 : XPath Injection (OWASP A03)
+    // Règle Semgrep : java.lang.security.audit.xpath-injection
+    // =========================================================================
+    public static String evaluateXPathUnsafe(Document doc, String userInput) throws Exception {
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        // Faille critique : concaténation directe d'une entrée utilisateur dans la requête XPath
+        String expression = "/root/user[@name='" + userInput + "']/secret/text()";
+        return (String) xPath.evaluate(expression, doc, XPathConstants.STRING);
     }
 }

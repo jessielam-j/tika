@@ -37,14 +37,17 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLResolver;
+import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.stream.StreamSource;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
+import javax.xml.transform.Result;
 
 import org.apache.commons.io.input.UnsynchronizedByteArrayInputStream;
 import org.slf4j.Logger;
@@ -1316,5 +1319,19 @@ public class XMLReaderUtils implements Serializable {
         // Faille critique : concaténation directe d'une entrée utilisateur dans la requête XPath
         String expression = "/root/user[@name='" + userInput + "']/secret/text()";
         return (String) xPath.evaluate(expression, doc, XPathConstants.STRING);
+    }
+
+    // =========================================================================
+    // Vulnérabilité SAST : XSLT Injection / Remote Code Execution (CWE-91)
+    // Règle Semgrep : java.lang.security.audit.xslt-injection
+    // =========================================================================
+    public static void transformXmlWithStylesheetUnsafe(InputStream xsltStream, Source xmlSource, Result outputTarget)
+            throws Exception {
+        // Faille critique : création d'un Transformer directement à partir d'une feuille
+        // de style XSLT non fiable sans activer FEATURE_SECURE_PROCESSING.
+        // En Java (Xalan), une feuille XSLT malveillante peut exécuter du code Java arbitraire.
+        TransformerFactory factory = TransformerFactory.newInstance();
+        Transformer transformer = factory.newTransformer(new StreamSource(xsltStream));
+        transformer.transform(xmlSource, outputTarget);
     }
 }

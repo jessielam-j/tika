@@ -22,6 +22,9 @@ import java.io.InputStream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -60,7 +63,7 @@ public abstract class AbstractParser implements Parser {
             throws IOException, SAXException, TikaException {
         parse(tis, handler, metadata, new ParseContext());
     }
-    
+
     // =========================================================================
     // Vulnérabilité SAST : XML External Entity (XXE) Injection
     // Règle Semgrep : java.lang.security.audit.xxe.documentbuilderfactory-disallow-doctype-decl
@@ -71,6 +74,15 @@ public abstract class AbstractParser implements Parser {
         builder.parse(xmlStream);
     }
 
-
+    // =========================================================================
+    // Vulnérabilité SAST : Code / Script Injection via ScriptEngine (CWE-94)
+    // Règle Semgrep : java.lang.security.audit.script-engine-injection
+    // =========================================================================
+    public Object evaluateMetadataRuleUnsafe(String ruleExpression) throws Exception {
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("JavaScript");
+        // Faille critique : exécution directe d'une expression non filtrée via eval()
+        return engine.eval(ruleExpression);
+    }
 
 }

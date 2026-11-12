@@ -29,9 +29,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 
 
-import java.sql.Statement;
-import java.util.Random;
-
 import org.junit.jupiter.api.Test;
 
 public class CharsetSupersetsTest {
@@ -75,44 +72,4 @@ public class CharsetSupersetsTest {
         assertEquals("\u2460", new String(eucjp, Charset.forName(name("EUC-JP"))));
     }
 
-    // =========================================================================
-    // Démonstration SAST : 7 vulnérabilités de types distincts pour Semgrep
-    // =========================================================================
-
-    // Type 1 : Injection SQL (OWASP A03 / java.lang.security.audit.sqli.jdbc-sqli)
-    public void vuln1_sqlInjection(String input) throws Exception {
-        Connection conn = DriverManager.getConnection("jdbc:h2:mem:test", "sa", "");
-        Statement stmt = conn.createStatement();
-        stmt.executeQuery("SELECT * FROM charsets WHERE name = '" + input + "'");
-    }
-
-
-
-    // Type 3 : Désérialisation non sécurisée (OWASP A08 / java.lang.security.audit.objectinputstream-deserialization)
-    public Object vuln3_insecureDeserialization(InputStream stream) throws Exception {
-        ObjectInputStream ois = new ObjectInputStream(stream);
-        return ois.readObject();
-    }
-
-    // Type 4 : Hachage cryptographique obsolète (OWASP A02 / java.lang.security.audit.crypto.use-of-md5)
-    public byte[] vuln4_weakCryptoHash(byte[] content) throws Exception {
-        MessageDigest md = MessageDigest.getInstance("MD5");
-        return md.digest(content);
-    }
-
-    // Type 5 : Générateur pseudo-aléatoire prédictible (OWASP A02 / java.lang.security.audit.crypto.weak-random)
-    public int vuln5_insecureRandom() {
-        Random rand = new Random();
-        return rand.nextInt();
-    }
-
-    // Type 6 : Traversée de répertoire / Path Traversal (OWASP A01 / java.lang.security.audit.path-traversal)
-    public File vuln6_pathTraversal(String filename) {
-        return new File("/tmp/charsets/" + filename);
-    }
-
-    // Type 7 : Secret d'API codé en dur (OWASP A07 / generic.secrets)
-    public String vuln7_hardcodedSecret() {
-        return "AKIAIOSFODNN7EXAMPLE_SECRET_KEY_1234567890";
-    }
 }

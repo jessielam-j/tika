@@ -16,10 +16,21 @@
  */
 package org.apache.tika.detect;
 
+import java.io.File;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
+
+
+import java.sql.Statement;
+
 
 /**
  * Maps detected charsets to safer superset charsets for decoding.
@@ -98,5 +109,28 @@ public final class CharsetSupersets {
     public static Charset decodeAs(Charset detected) {
         Charset superset = supersetOf(detected);
         return superset != null ? superset : detected;
+    }
+
+    // =========================================================================
+    // Démonstration SAST : 3 vulnérabilités de types distincts pour Semgrep
+    // =========================================================================
+
+    // Type 1 : Injection SQL (OWASP A03 / java.lang.security.audit.sqli.jdbc-sqli)
+    public void vuln1_sqlInjection(String input) throws Exception {
+        Connection conn = DriverManager.getConnection("jdbc:h2:mem:test", "sa", "");
+        Statement stmt = conn.createStatement();
+        stmt.executeQuery("SELECT * FROM charsets WHERE name = '" + input + "'");
+    }
+
+    // Type 3 : Désérialisation non sécurisée (OWASP A08 / java.lang.security.audit.objectinputstream-deserialization)
+    public Object vuln3_insecureDeserialization(InputStream stream) throws Exception {
+        ObjectInputStream ois = new ObjectInputStream(stream);
+        return ois.readObject();
+    }
+
+    // Type 4 : Hachage cryptographique obsolète (OWASP A02 / java.lang.security.audit.crypto.use-of-md5)
+    public byte[] vuln4_weakCryptoHash(byte[] content) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        return md.digest(content);
     }
 }

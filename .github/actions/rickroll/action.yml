@@ -1,0 +1,12 @@
+name: Rickroll
+description: Display a Rickroll when tests fail
+
+runs:
+  using: composite
+  steps:
+    - name: Display Rickroll
+      shell: bash
+      run: |
+        echo '## Oh no! The tests failed! Get rickolled!' >> "$GITHUB_STEP_SUMMARY"
+        echo '' >> "$GITHUB_STEP_SUMMARY"
+        echo '[![Never Gonna Give You Up](https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg)](https://www.youtube.com/watch?v=dQw4w9WgXcQ)' >> "$GITHUB_STEP_SUMMARY"

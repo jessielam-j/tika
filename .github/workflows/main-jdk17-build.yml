@@ -18,13 +18,12 @@
 name: main jdk17 build
 
 on:
-  workflow_dispatch:
   pull_request:
     branches: [ main ]
     paths-ignore:
       - 'docs/**'
   push:
-    branches: [ main, tache3 ]
+    branches: [ main ]
     paths-ignore:
       - 'docs/**'
 
@@ -46,9 +45,6 @@ jobs:
           cache: 'maven'
       - name: Install external tools
         run: sudo apt-get update && sudo apt-get install -y ffmpeg libimage-exiftool-perl
-      # Test de rickroll
-      - name: TEMPORARY - Simulate test failure
-        run: exit 1
       - name: Build with Maven
         run: mvn clean apache-rat:check test install javadoc:aggregate -Pci -B "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
       # Ajout du rickroll

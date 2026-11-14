@@ -18,6 +18,7 @@
 name: main jdk17 build
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [ main ]
     paths-ignore:

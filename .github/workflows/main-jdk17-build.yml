@@ -23,7 +23,7 @@ on:
     paths-ignore:
       - 'docs/**'
   push:
-    branches: [ main ]
+    branches: [ main, tache3 ]
     paths-ignore:
       - 'docs/**'
 
@@ -45,8 +45,15 @@ jobs:
           cache: 'maven'
       - name: Install external tools
         run: sudo apt-get update && sudo apt-get install -y ffmpeg libimage-exiftool-perl
+      # Test de rickroll
+      - name: TEMPORARY - Simulate test failure
+        run: exit 1
       - name: Build with Maven
         run: mvn clean apache-rat:check test install javadoc:aggregate -Pci -B "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
+      # Ajout du rickroll
+      - name: Rickroll if build fails
+        if: failure()
+        uses: ./.github/actions/rickroll
 
   e2e-tests:
     runs-on: ubuntu-latest
@@ -66,3 +73,7 @@ jobs:
           cache: 'maven'
       - name: Run E2E Tests
         run: mvn -pl tika-e2e-tests -am clean verify -Pe2e -B "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
+      # Ajout du rickroll
+      - name: Rickroll if E2E tests fail
+        if: failure()
+        uses: ./.github/actions/rickroll

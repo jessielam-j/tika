@@ -1,250 +1,141 @@
-Welcome to Apache Tika  <https://tika.apache.org/>
-=================================================
+# Tâche 3 
 
-[![license](https://img.shields.io/github/license/apache/tika.svg?maxAge=2592000)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Jenkins](https://img.shields.io/jenkins/s/https/ci-builds.apache.org/job/Tika/job/tika-main-jdk17.svg?maxAge=3600)](https://ci-builds.apache.org/job/Tika/job/tika-main-jdk17/)
-[![Jenkins tests](https://img.shields.io/jenkins/t/https/ci-builds.apache.org/job/Tika/job/tika-main-jdk17.svg?maxAge=3600)](https://ci-builds.apache.org/job/Tika/job/tika-main-jdk17/lastBuild/testReport/)
-[![Maven Central](https://img.shields.io/maven-central/v/org.apache.tika/tika.svg?maxAge=86400)](http://search.maven.org/#search|ga|1|g%3A%22org.apache.tika%22)
+### Modification du workflow Github Actions
 
-Apache Tika(TM) is a toolkit for detecting and extracting metadata and structured text content from various documents using existing parser libraries.
+## 1. Choix de conception et d'implémentation
 
-Tika is a project of the [Apache Software Foundation](https://www.apache.org).
+### Création d'un workflow dédié (`.github/workflows/semgrep.yml`)
+Plutôt que d'injecter une étape supplémentaire dans les workflows de compilation existants (`main-jdk17-build.yml`)[cite: 1], un fichier distinct a été créé pour les raisons suivantes :
+* **Séparation des responsabilités :** Découplage clair entre les tests fonctionnels/unitaires Java et l'audit de sécurité.
+* **Rapidité et retour d'information :** L'analyse statique s'exécute en quelques secondes indépendamment de la compilation Maven complète, offrant un diagnostic immédiat aux développeurs.
+* **Maintenabilité :** Facilite la mise à jour des règles de sécurité et des versions de l'analyseur sans risquer de perturber le build applicatif.
 
-Apache Tika, Tika, Apache, the Apache feather logo, and the Apache Tika project logo are trademarks of The Apache Software Foundation.
+### Configuration technique du pipeline
+Les directives retenues dans `.github/workflows/semgrep.yml` répondent aux exigences suivantes :
 
-Quick Start
-===========
+* **Déclencheurs (`on: pull_request`, `on: push`) :** Le workflow s'exécute systématiquement sur chaque Pull Request ciblant `main` afin d'intercepter les vulnérabilités avant leur fusion, ainsi que sur les commits poussés directement sur la branche.
+* **Analyse différentielle (`fetch-depth: 0`) :** L'option `fetch-depth: 0` lors de l'étape `actions/checkout` permet de récupérer l'historique Git complet. Semgrep peut ainsi calculer le différentiel (`diff`) par rapport à la branche cible et **ne bloquer que sur les nouvelles failles introduites**, évitant de paralyser le développement à cause de la dette technique préexistante dans le projet.
+* **Exclusion du dossier de configuration CI (`--exclude .github`) :** L'ajout du drapeau `--exclude .github` permet de restreindre le périmètre d'analyse au code applicatif du projet. Cela évite que Semgrep ne signale des alertes ou faux positifs liés aux fichiers de configuration internes des workflows GitHub Actions (notamment l'utilisation d'actions tierces par tag de version plutôt que par hash SHA dans les pipelines existants d'Apache Tika).
+* **Jeux de règles sélectionnés (`p/security-audit` et `p/owasp-top-ten`) :** Ces catalogues officiels offrent une couverture robuste des vulnérabilités applicatives critiques en Java (injections, cryptographie faible, désérialisation non sécurisée, etc.) tout en limitant les faux positifs stylistiques.
+* **Politique de blocage strict (Quality Gate) :** Aucune directive `continue-on-error: true` n'est présente. Dès qu'une vulnérabilité est détectée dans le périmètre modifié, Semgrep retourne un code de sortie non nul (`exit code 1`), faisant échouer le job GitHub Actions.
+* **Principe du moindre privilège (`permissions`) :** Les droits du jeton `GITHUB_TOKEN` sont restreints à `contents: read` (lecture du code) et `security-events: write` (remontée des alertes).
 
-**Parse a file in Java:**
+---
 
-```java
-import org.apache.tika.Tika;
+## 2. Protocole de validation
 
-Tika tika = new Tika();
-String text = tika.parseToString(new File("document.pdf"));
-System.out.println(text);
-```
+La validation du bon fonctionnement de cette modification s'est déroulée en trois étapes :
 
-**From the command line:**
+### A. Validation syntaxique et d'intégration (Cas nominal)
+* **Procédure :** Ajout du fichier `.github/workflows/semgrep.yml` seul sur une branche dédiée et ouverture d'une Pull Request vers `main`.
+* **Résultat :** Le déclencheur `pull_request` s'est activé automatiquement, l'environnement Ubuntu a exécuté le scan sans erreur de configuration (en ignorant le dossier `.github` grâce à `--exclude .github`), et le workflow s'est terminé avec succès (`exit code 0`, statut vert), confirmant l'absence de faux positifs sur la base de code saine.
 
-```bash
-java -jar tika-app-*.jar --text document.pdf
-```
+### B. Validation du blocage (Test négatif)
+* **Procédure :** Introduction volontaire de vulnérabilités Java reconnues (telles que l'utilisation de l'algorithme obsolète MD5 ou une injection de commande via `Runtime.getRuntime().exec()`) dans un commit de test sur la branche de la Pull Request.
+* **Résultat :** L'analyse Semgrep a identifié les failles introduites et a immédiatement interrompu le pipeline (`Process completed with exit code 1`). Le check GitHub est passé au rouge, démontrant l'efficacité de la barrière de sécurité.
 
-**Maven dependency:**
+### C. Validation du retour à la normale (Correction)
+* **Procédure :** Suppression des fragments de code vulnérables et publication d'un nouveau commit sur la même Pull Request.
+* **Résultat :** Le workflow s'est relancé automatiquement et le statut est repassé au vert, validant la réactivité du mécanisme lors des cycles de correction.
 
-```xml
-<dependency>
-    <groupId>org.apache.tika</groupId>
-    <artifactId>tika-parsers-standard-package</artifactId>
-    <version>4.x.y</version>
-    <type>pom</type>
-</dependency>
-```
+--- 
 
-Getting Started
-===============
-Pre-built binaries of Apache Tika standalone applications are available
-from https://tika.apache.org/download.html . Pre-built binaries of all the
-Tika jars can be fetched from Maven Central or your favourite Maven mirror.
+### Ajout de vulnérabilités
 
-**Tika 2.X and support for Java 8 reached End of Life (EOL) in April, 2025. 
-See [Tika Roadmap 2.x, 3.x and beyond](https://cwiki.apache.org/confluence/display/TIKA/Tika+Roadmap+--+2.x%2C+3.x+and+Beyond).** 
+## Vue d'ensemble des vulnérabilités
 
-Tika is based on **Java 17** and uses the [Maven 3](https://maven.apache.org) build system.
-**N.B.** [Docker](https://www.docker.com/products/personal) is used for tests in tika-integration-tests. If Docker is not installed, those tests are skipped.
+| \# | Type de vulnérabilité | Identifiant CWE | Catégorie OWASP 2021 | Fichier cible (`src/main/java/...`) | Règle Semgrep ciblée | Sévérité |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1** | **Injection SQL (SQLi)** | CWE-89 | A03: Injection | `org/apache/tika/detect/CharsetSupersets.java` | `java.lang.security.audit.sqli.jdbc-sqli` | `ERROR` (Bloquant) |
+| **2** | **Désérialisation non sécurisée** | CWE-502 | A08: Software & Data Integrity | `org/apache/tika/detect/CharsetSupersets.java` | `java.lang.security.audit.objectinputstream-deserialization` | `ERROR` (Bloquant) |
+| **3** | **Hachage cryptographique faible (MD5)** | CWE-328 | A02: Cryptographic Failures | `org/apache/tika/detect/CharsetSupersets.java` | `java.lang.security.audit.crypto.use-of-md5` | `WARNING` (Avertissement) |
+| **4** | **XML External Entity (XXE)** | CWE-611 | A05: Security Misconfiguration | `org/apache/tika/parser/AbstractParser.java` | `java.lang.security.audit.xxe.documentbuilderfactory-disallow-doctype-decl` | `ERROR` (Bloquant) |
+| **5** | **Injection de Script (`ScriptEngine`)** | CWE-94 | A03: Injection | `org/apache/tika/parser/AbstractParser.java` | `java.lang.security.audit.script-engine-injection` | `ERROR` (Bloquant) |
+| **6** | **Injection XPath** | CWE-643 | A03: Injection | `org/apache/tika/utils/XMLReaderUtils.java` | `java.lang.security.audit.xpath-injection` | `ERROR` (Bloquant) |
+| **7** | **Injection XSLT (Exécution de code)** | CWE-91 | A03: Injection | `org/apache/tika/utils/XMLReaderUtils.java` | `java.lang.security.audit.xslt-injection` | `ERROR` (Bloquant) |
 
-To build Tika from source, use the following command in the main directory:
+---
 
-    ./mvnw clean install
+1. Injection SQL (vuln1_sqlInjection)
 
-The Maven wrapper (`mvnw`) is included in the repository and will automatically download
-the correct Maven version if needed. On Windows, use `mvnw.cmd` instead.
+Choix du fichier modifié : tika-core/src/main/java/org/apache/tika/detect/CharsetSupersets.java
 
-The build consists of a number of components, including a standalone runnable jar that you can use to try out Tika features. You can run it like this:
+Justification : CharsetSupersets est une classe du code source principal (src/main/java) chargée d'associer les jeux de caractères détectés à leurs surensembles d'encodage. L'ajout d'une requête JDBC simule un cas d'usage réaliste où cette table de correspondance serait interrogée dynamiquement depuis une base de données relationnelle plutôt que depuis une structure statique en mémoire.
 
-    java -jar tika-app/target/tika-app-*.jar --help
+Type de vulnérabilité : Injection SQL — CWE-89 / OWASP A03:2021 (Injection).
 
+Raison pour laquelle le code est vulnérable : La requête SQL est assemblée par concaténation directe du paramètre input dans la chaîne transmise à Statement.executeQuery("SELECT * FROM charsets WHERE name = '" + input + "'"), sans recours à une requête préparée (PreparedStatement). Un attaquant contrôlant la valeur d'input peut injecter des commandes SQL arbitraires (ex. ' OR '1'='1) pour manipuler la requête ou extraire des données non autorisées.
 
-To build a specific project (for example, tika-server-standard):
+Résultat obtenu avec Semgrep : Détectée comme alerte bloquante (ERROR) par la règle java.lang.security.audit.sqli.jdbc-sqli.
 
-    ./mvnw clean install -am -pl :tika-server-standard
+2. Désérialisation de données non fiables (vuln3_insecureDeserialization)
 
-If the ossindex-maven-plugin is causing the build to fail because a dependency
-has now been discovered to have a vulnerability:
+Choix du fichier modifié : tika-core/src/main/java/org/apache/tika/detect/CharsetSupersets.java
 
-    ./mvnw clean install -Dossindex.skip
+Justification : Le package org.apache.tika.detect traite directement les flux binaires entrants (InputStream) afin d'identifier l'encodage et le format des documents. Charger un dictionnaire d'encodages sérialisé depuis un flux brut s'inscrit directement dans le périmètre fonctionnel de cette classe.
 
+Type de vulnérabilité : Désérialisation de données non fiables — CWE-502 / OWASP A08:2021 (Software and Data Integrity Failures).
 
-Faster Builds
-=============
+Raison pour laquelle le code est vulnérable : La méthode instancie un ObjectInputStream directement sur un flux InputStream externe et invoque ois.readObject() sans validation préalable ni filtrage de classes (ObjectInputFilter). Si le flux provient d'une source non fiable, un attaquant peut fournir une chaîne de gadgets (gadget chain) présente dans le classpath Java pour déclencher une exécution de code à distance (RCE) lors de la reconstruction de l'objet.
 
-**Fast profile** - Use `-Pfast` to skip tests, checkstyle, and spotless:
+Résultat obtenu avec Semgrep : Détectée comme alerte bloquante (ERROR) par la règle java.lang.security.audit.objectinputstream-deserialization.
 
-    ./mvnw clean install -Pfast
+3. Utilisation d'un algorithme de hachage cryptographique faible (vuln4_weakCryptoHash)
 
-**Parallel builds** - Add `-T1C` to build with 1 thread per CPU core:
+Choix du fichier modifié : tika-core/src/main/java/org/apache/tika/detect/CharsetSupersets.java
 
-    ./mvnw clean install -Pfast -T1C
+Justification : Dans un module de détection de contenu, le calcul d'empreintes de hachage sur des tableaux d'octets (byte[] content) est une opération courante pour identifier ou mettre en cache des signatures de fichiers.
 
-**Maven Daemon (mvnd)** - Keeps a warm JVM running for 2-3x faster rebuilds:
+Type de vulnérabilité : Utilisation d'un algorithme cryptographique cassé ou risqué — CWE-328 / OWASP A02:2021 (Cryptographic Failures).
 
-```bash
-# Install: https://github.com/apache/maven-mvnd
-# macOS: brew install mvndaemon/tap/mvnd
+Raison pour laquelle le code est vulnérable : La méthode utilise MessageDigest.getInstance("MD5"). L'algorithme MD5 est cryptographiquement obsolète et vulnérable aux attaques par collisions pratiques, permettant à un attaquant de générer deux contenus distincts produisant exactement la même empreinte.
 
-# Use exactly like mvn
-mvnd clean install -Pfast
-mvnd test -pl :tika-core
-```
+Résultat obtenu avec Semgrep : Détectée au niveau avertissement (WARNING) par la règle java.lang.security.audit.crypto.use-of-md5. Semgrep ne la classe pas en ERROR par défaut afin d'éviter les faux positifs lorsque MD5 est utilisé pour de simples sommes de contrôle non sécuritaires, ce qui permet d'observer la distinction entre alertes bloquantes et non bloquantes.
 
-**Combine both** for maximum speed during development:
-
-    mvnd clean install -Pfast -T1C
-
-
-Reproducible Builds
-===================
-
-Apache Tika supports [reproducible builds](https://reproducible-builds.org/). This means
-that building the same source code with the same JDK version should produce
-byte-for-byte identical artifacts, regardless of the build machine or time.
-
-Key configuration:
-- `project.build.outputTimestamp` is set in `tika-parent/pom.xml`
-- All Maven plugins are configured to produce deterministic output
+4. Injection d'entités externes XML — XXE (parseXmlUnsafe)
 
-To verify the build plan supports reproducibility:
+Choix du fichier modifié : tika-core/src/main/java/org/apache/tika/parser/AbstractParser.java
 
-    ./mvnw artifact:check-buildplan
+Justification : AbstractParser est la classe de base dont hérite la majorité des parseurs de documents d'Apache Tika. Le traitement de flux XML entrants (InputStream) étant au cœur du module org.apache.tika.parser, cet emplacement est particulièrement représentatif d'une faille de parsing XML.
 
-To verify two builds produce identical artifacts:
+Type de vulnérabilité : Mauvaise restriction des références d'entités externes XML (XXE) — CWE-611 / OWASP A05:2021 (Security Misconfiguration).
 
-    ./mvnw clean install -DskipTests
-    mv ~/.m2/repository/org/apache/tika tika-build-1
-    ./mvnw clean install -DskipTests
-    diff -r tika-build-1 ~/.m2/repository/org/apache/tika
+Raison pour laquelle le code est vulnérable : La méthode crée un parseur DOM via DocumentBuilderFactory.newInstance() et appelle directement builder.parse(xmlStream) sans désactiver le traitement des déclarations DOCTYPE (http://apache.org/xml/features/disallow-doctype-decl) ni la résolution des entités externes (external-general-entities). Un fichier XML malveillant contenant une référence SYSTEM "file:///..." permet d'exfiltrer des fichiers locaux du serveur ou d'effectuer des requêtes SSRF.
 
+Résultat obtenu avec Semgrep : Détectée comme alerte bloquante (ERROR) par la règle java.lang.security.audit.xxe.documentbuilderfactory-disallow-doctype-decl.
 
-Maven Dependencies
-==================
+5. Injection de code dynamique via moteur de script (evaluateMetadataRuleUnsafe)
 
-Apache Tika provides *Bill of Material* (BOM) artifact to align Tika module versions and simplify version management. 
-To avoid convergence errors in your own project, import this
-bom or Tika's parent pom.xml in your dependency management section.
+Choix du fichier modifié : tika-core/src/main/java/org/apache/tika/parser/AbstractParser.java
 
-If you use Apache Maven:
+Justification : Dans une classe parente de parsing, l'ajout d'un évaluateur dynamique permettant d'appliquer des règles de filtrage ou de normalisation sur les métadonnées extraites correspond à un besoin réaliste d'extensibilité logicielle.
 
-```xml
-<project>
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-       <groupId>org.apache.tika</groupId>
-       <artifactId>tika-bom</artifactId>
-       <version>4.x.y</version>
-       <type>pom</type>
-       <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
+Type de vulnérabilité : Contrôle inapproprié de la génération de code (Code Injection) — CWE-94 / OWASP A03:2021 (Injection).
 
-  <dependencies>
-    <dependency>
-      <groupId>org.apache.tika</groupId>
-      <artifactId>tika-parsers-standard-package</artifactId>
-      <type>pom</type>
-      <!-- version not required since BOM included -->
-    </dependency>
-  </dependencies>
-</project>
-```
+Raison pour laquelle le code est vulnérable : La méthode récupère un moteur JavaScript via ScriptEngineManager.getEngineByName("JavaScript") et exécute directement la chaîne ruleExpression avec engine.eval(ruleExpression) sans sandboxing ni filtrage. Dans la JVM, ce moteur dispose d'un accès aux classes Java (Java.type('java.lang.Runtime')), permettant à une entrée malveillante d'exécuter des commandes système arbitraires.
 
-For Gradle:
+Résultat obtenu avec Semgrep : Détectée comme alerte bloquante (ERROR) par la règle java.lang.security.audit.script-engine-injection.
 
-```kotlin
-dependencies {
-  implementation(platform("org.apache.tika:tika-bom:4.x.y"))
+6. Injection XPath (evaluateXPathUnsafe)
 
-  // version not required since bom (platform in Gradle terms)
-  implementation("org.apache.tika:tika-parsers-standard-package@pom")
-}
-```
+Choix du fichier modifié : tika-core/src/main/java/org/apache/tika/utils/XMLReaderUtils.java
 
-Migrating to 4.x
-================
-TBD
+Justification : XMLReaderUtils est la classe utilitaire centrale dédiée à toutes les manipulations sécurisées d'arbres DOM et de flux XML (Document, SAXParser, XMLInputFactory) au sein de tika-core. L'ajout d'une méthode utilitaire d'interrogation XPath s'intègre naturellement aux responsabilités de ce fichier.
 
-Contributing
-============
-See [CONTRIBUTING.md](CONTRIBUTING.md) and https://tika.apache.org/contribute.html
+Type de vulnérabilité : Neutralisation incorrecte des données dans les requêtes XPath (XPath Injection) — CWE-643 / OWASP A03:2021 (Injection).
 
-[![contributors](https://contributors-img.web.app/image?repo=apache/tika)](https://github.com/apache/tika/graphs/contributors)
+Raison pour laquelle le code est vulnérable : L'expression XPath est construite par concaténation directe du paramètre userInput ("/root/user[@name='" + userInput + "']/secret/text()") avant son évaluation par xPath.evaluate(...), sans utiliser un XPathVariableResolver. Un attaquant peut injecter des apostrophes et des opérateurs logiques (' or '1'='1) pour contourner le filtrage et extraire l'intégralité des nœuds sensibles du document XML.
 
-Building from a Specific Tag
-============================
-Let's assume that you want to build the 3.0.1 tag:
-```
-0. Download and install hub.github.com
-1. git clone https://github.com/apache/tika.git
-2. cd tika
-3. git checkout 3.0.1
-4. ./mvnw clean install
-```
+Résultat obtenu avec Semgrep : Détectée comme alerte bloquante (ERROR) par la règle java.lang.security.audit.xpath-injection.
 
-If a new vulnerability has been discovered between the date of the
-tag and the date you are building the tag, you may need to build with:
+7. Injection XSLT / Exécution de code via feuille de style (transformXmlWithStylesheetUnsafe)
 
-```
-4. ./mvnw clean install -Dossindex.skip
-```
+Choix du fichier modifié : tika-core/src/main/java/org/apache/tika/utils/XMLReaderUtils.java
 
-If a local test is not working in your environment, please notify
- the project at dev@tika.apache.org. As an immediate workaround,
- you can turn off individual tests with e.g.:
+Justification : XMLReaderUtils définit déjà les méthodes de fabrique getTransformer() et getTransformerFactory(), explicitement sécurisées contre les attaques XML (notamment en référence à CVE-2025-54988). Introduire une méthode parallèle qui contourne getTransformerFactory() démontre l'intérêt d'un outil SAST pour détecter une régression de sécurité au sein d'un composant critique.
 
-```
-4. ./mvnw clean install -Dossindex.skip -Dtest=\!UnpackerResourceTest#testPDFImages
-```
+Type de vulnérabilité : Injection XSLT — CWE-91 / OWASP A03:2021 (Injection).
 
-License (see also LICENSE.txt)
-==============================
+Raison pour laquelle le code est vulnérable : La méthode instancie un TransformerFactory.newInstance() brut et compile directement une feuille de style XSLT provenant d'un flux externe (factory.newTransformer(new StreamSource(xsltStream))) sans activer XMLConstants.FEATURE_SECURE_PROCESSING ni bloquer ACCESS_EXTERNAL_STYLESHEET. Avec le processeur XSLT intégré à Java (Xalan), une feuille de style malveillante peut invoquer des méthodes statiques Java et exécuter du code arbitraire sur le serveur.
 
-Collective work: Copyright 2011 The Apache Software Foundation.
-
-Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements.  See the NOTICE file distributed with this work for additional information regarding copyright ownership.  The ASF licenses this file to You under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.  You may obtain a copy of the License at
-
-<https://www.apache.org/licenses/LICENSE-2.0>
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the specific language governing permissions and limitations under the License.
-
-Apache Tika includes a number of subcomponents with separate copyright notices and license terms. Your use of these subcomponents is subject to the terms and conditions of the licenses listed in the LICENSE.txt file.
-
-Export Control
-==============
-
-This distribution includes cryptographic software.  The country in which you currently reside may have restrictions on the import, possession, use, and/or re-export to another country, of encryption software.  BEFORE using any encryption software, please  check your country's laws, regulations and policies concerning the import, possession, or use, and re-export of encryption software, to  see if this is permitted.  See <http://www.wassenaar.org/> for more information.
-
-The U.S. Government Department of Commerce, Bureau of Industry and Security (BIS), has classified this software as Export Commodity Control Number (ECCN) 5D002.C.1, which includes information security software using or performing cryptographic functions with asymmetric algorithms.  The form and manner of this Apache Software Foundation distribution makes it eligible for export under the License Exception ENC Technology Software Unrestricted (TSU) exception (see the BIS Export Administration Regulations, Section 740.13) for both object code and source code.
-
-The following provides more details on the included cryptographic software:
-
-Apache Tika uses the Bouncy Castle generic encryption libraries for extracting text content and metadata from encrypted PDF files.  See <http://www.bouncycastle.org/> for more details on Bouncy Castle.  
-
-Mailing Lists
-=============
-
-* user@tika.apache.org - About using Tika
-* dev@tika.apache.org - About developing Tika
-
-Subscribe by sending a message to `{list}-subscribe@tika.apache.org`.
-
-Issue Tracker
-=============
-
-https://issues.apache.org/jira/browse/TIKA
-
-Security
-========
-
-See [SECURITY.md](SECURITY.md) and https://tika.apache.org/security.html
+Résultat obtenu avec Semgrep : Détectée comme alerte bloquante (ERROR) par la règle java.lang.security.audit.xslt-injection.

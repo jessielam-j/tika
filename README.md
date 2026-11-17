@@ -5,7 +5,7 @@
 ## 1. Choix de conception et d'implémentation
 
 ### Création d'un workflow dédié (`.github/workflows/semgrep.yml`)
-Plutôt que d'injecter une étape supplémentaire dans les workflows de compilation existants (`main-jdk17-build.yml`)[cite: 1], un fichier distinct a été créé pour les raisons suivantes :
+Plutôt que d'injecter une étape supplémentaire dans les workflows de compilation existants (`main-jdk17-build.yml`), un fichier distinct a été créé pour les raisons suivantes :
 * **Séparation des responsabilités :** Découplage clair entre les tests fonctionnels/unitaires Java et l'audit de sécurité.
 * **Rapidité et retour d'information :** L'analyse statique s'exécute en quelques secondes indépendamment de la compilation Maven complète, offrant un diagnostic immédiat aux développeurs.
 * **Maintenabilité :** Facilite la mise à jour des règles de sécurité et des versions de l'analyseur sans risquer de perturber le build applicatif.
@@ -59,28 +59,28 @@ La validation du bon fonctionnement de cette modification s'est déroulée en tr
 ## Documentation détaillée des vulnérabilités introduites
 
 ### 1. Injection SQL (`vuln1_sqlInjection`)
-* **Fichier modifié :** `tika-core/src/main/java/org/apache/tika/detect/CharsetSupersets.java`[cite: 2]
-* **Justification du choix du fichier :** `CharsetSupersets` est une classe active du code de production (`src/main/java`) responsable de la correspondance entre les jeux de caractères détectés et leurs surensembles[cite: 2]. L'intégration d'une requête JDBC simule un scénario réaliste où la table de correspondance des encodages serait interrogée dynamiquement depuis une base de données relationnelle plutôt que depuis une `Map` statique en mémoire[cite: 2].
+* **Fichier modifié :** `tika-core/src/main/java/org/apache/tika/detect/CharsetSupersets.java`
+* **Justification du choix du fichier :** `CharsetSupersets` est une classe active du code de production (`src/main/java`) responsable de la correspondance entre les jeux de caractères détectés et leurs surensembles. L'intégration d'une requête JDBC simule un scénario réaliste où la table de correspondance des encodages serait interrogée dynamiquement depuis une base de données relationnelle plutôt que depuis une `Map` statique en mémoire.
 * **Type de vulnérabilité :** Injection SQL — **CWE-89** / **OWASP A03:2021 (Injection)**.
-* **Raison de la vulnérabilité :** La méthode construit une requête SQL en concaténant directement le paramètre d'entrée `input` dans la chaîne transmise à `Statement.executeQuery("SELECT * FROM charsets WHERE name = '" + input + "'")`[cite: 2], sans utiliser de requête préparée (`PreparedStatement`) ni de liaison de paramètres. Un attaquant maîtrisant `input` peut altérer la structure syntaxique de la requête SQL (ex. `' OR '1'='1`).
+* **Raison de la vulnérabilité :** La méthode construit une requête SQL en concaténant directement le paramètre d'entrée `input` dans la chaîne transmise à `Statement.executeQuery("SELECT * FROM charsets WHERE name = '" + input + "'")`, sans utiliser de requête préparée (`PreparedStatement`) ni de liaison de paramètres. Un attaquant maîtrisant `input` peut altérer la structure syntaxique de la requête SQL (ex. `' OR '1'='1`).
 * **Résultat obtenu avec Semgrep :** Détectée comme **alerte bloquante (`ERROR`)** par la règle `java.lang.security.audit.sqli.jdbc-sqli`.
 
 ---
 
 ### 2. Désérialisation d'objets non fiables (`vuln3_insecureDeserialization`)
-* **Fichier modifié :** `tika-core/src/main/java/org/apache/tika/detect/CharsetSupersets.java`[cite: 2]
-* **Justification du choix du fichier :** Le package `org.apache.tika.detect` manipule directement les flux bruts entrants (`InputStream`) pour identifier le format des documents[cite: 2]. Simuler le chargement d'une table de configuration d'encodages depuis un flux binaire sérialisé s'inscrit directement dans le périmètre fonctionnel de cette classe[cite: 2].
+* **Fichier modifié :** `tika-core/src/main/java/org/apache/tika/detect/CharsetSupersets.java`
+* **Justification du choix du fichier :** Le package `org.apache.tika.detect` manipule directement les flux bruts entrants (`InputStream`) pour identifier le format des documents. Simuler le chargement d'une table de configuration d'encodages depuis un flux binaire sérialisé s'inscrit directement dans le périmètre fonctionnel de cette classe.
 * **Type de vulnérabilité :** Désérialisation de données non fiables — **CWE-502** / **OWASP A08:2021 (Software and Data Integrity Failures)**.
-* **Raison de la vulnérabilité :** La méthode instancie un `ObjectInputStream` directement sur un flux `InputStream` non vérifié et invoque `ois.readObject()` sans filtrage préalable de classes (`ObjectInputFilter`)[cite: 2]. Si le flux provient d'une source externe, un attaquant peut fournir une chaîne de gadgets (*gadget chain*) présente dans le classpath Java pour obtenir une exécution de code arbitraire (RCE) lors de la reconstruction de l'objet.
+* **Raison de la vulnérabilité :** La méthode instancie un `ObjectInputStream` directement sur un flux `InputStream` non vérifié et invoque `ois.readObject()` sans filtrage préalable de classes (`ObjectInputFilter`). Si le flux provient d'une source externe, un attaquant peut fournir une chaîne de gadgets (*gadget chain*) présente dans le classpath Java pour obtenir une exécution de code arbitraire (RCE) lors de la reconstruction de l'objet.
 * **Résultat obtenu avec Semgrep :** Détectée comme **alerte bloquante (`ERROR`)** par la règle `java.lang.security.audit.objectinputstream-deserialization`.
 
 ---
 
 ### 3. Utilisation d'un algorithme de hachage cryptographique obsolète (`vuln4_weakCryptoHash`)
-* **Fichier modifié :** `tika-core/src/main/java/org/apache/tika/detect/CharsetSupersets.java`[cite: 2]
-* **Justification du choix du fichier :** Dans un module de détection de contenu et d'encodage, le calcul d'empreintes de hachage sur des tampons d'octets (`byte[] content`) est une opération courante (vérification d'intégrité ou mise en cache de signatures de fichiers)[cite: 2].
+* **Fichier modifié :** `tika-core/src/main/java/org/apache/tika/detect/CharsetSupersets.java`
+* **Justification du choix du fichier :** Dans un module de détection de contenu et d'encodage, le calcul d'empreintes de hachage sur des tampons d'octets (`byte[] content`) est une opération courante (vérification d'intégrité ou mise en cache de signatures de fichiers).
 * **Type de vulnérabilité :** Utilisation d'un algorithme cryptographique cassé ou risqué — **CWE-328** / **OWASP A02:2021 (Cryptographic Failures)**.
-* **Raison de la vulnérabilité :** La méthode appelle `MessageDigest.getInstance("MD5")`[cite: 2]. L'algorithme MD5 est cryptographiquement cassé et vulnérable aux attaques par collisions pratiques, ce qui permet de forger deux contenus distincts produisant la même empreinte.
+* **Raison de la vulnérabilité :** La méthode appelle `MessageDigest.getInstance("MD5")`. L'algorithme MD5 est cryptographiquement cassé et vulnérable aux attaques par collisions pratiques, ce qui permet de forger deux contenus distincts produisant la même empreinte.
 * **Résultat obtenu avec Semgrep :** Détectée par la règle `java.lang.security.audit.crypto.use-of-md5` au niveau **avertissement (`WARNING`)**. Contrairement aux autres failles, Semgrep ne la classe pas comme bloquante par défaut afin de limiter les faux positifs lorsque MD5 est utilisé à des fins non cryptographiques (sommes de contrôle internes), illustrant la distinction entre alertes `ERROR` et `WARNING` dans le pipeline.
 
 ---
@@ -104,20 +104,20 @@ La validation du bon fonctionnement de cette modification s'est déroulée en tr
 ---
 
 ### 6. Injection XPath (`evaluateXPathUnsafe`)
-* **Fichier modifié :** `tika-core/src/main/java/org/apache/tika/utils/XMLReaderUtils.java`[cite: 1]
-* **Justification du choix du fichier :** `XMLReaderUtils` est la classe utilitaire centrale d'Apache Tika dédiée à la manipulation sécurisée d'arbres DOM et de flux XML (`Document`, `SAXParser`, `XMLInputFactory`)[cite: 1]. Ajouter une méthode utilitaire d'extraction de nœuds XPath s'inscrit directement dans les responsabilités de cette classe.
+* **Fichier modifié :** `tika-core/src/main/java/org/apache/tika/utils/XMLReaderUtils.java`
+* **Justification du choix du fichier :** `XMLReaderUtils` est la classe utilitaire centrale d'Apache Tika dédiée à la manipulation sécurisée d'arbres DOM et de flux XML (`Document`, `SAXParser`, `XMLInputFactory`). Ajouter une méthode utilitaire d'extraction de nœuds XPath s'inscrit directement dans les responsabilités de cette classe.
 * **Type de vulnérabilité :** Neutralisation incorrecte des données dans les requêtes XPath (XPath Injection) — **CWE-643** / **OWASP A03:2021 (Injection)**.
 * **Raison de la vulnérabilité :** L'expression XPath est construite par concaténation directe du paramètre `userInput` (`"/root/user[@name='" + userInput + "']/secret/text()"`) avant d'être évaluée par `xPath.evaluate(...)`, sans recours à un `XPathVariableResolver`. Une entrée contenant `' or '1'='1` permet de contourner les filtres d'accès et d'extraire l'intégralité des données sensibles du document XML.
-* **Résultat obtenu avec Semgrep :** Détectée comme **alerte bloquante (`ERROR`)** par la règle `java.lang.security.audit.xpath-injection`.
+* **Résultat obtenu avec Semgrep :** **Non détectée (Faux négatif)**. Aucune règle n'a été déclenchée sur cette méthode lors du scan local avec les jeux de règles utilisés (`p/security-audit` et `p/owasp-top-ten`), car la chaîne concaténée est stockée dans une variable intermédiaire (`expression`) avant d'être passée à `xPath.evaluate(...)`, ce qui échappe à la correspondance syntaxique directe de la règle OSS sans analyse *taint* inter-lignes.
 
 ---
 
 ### 7. Injection XSLT / Exécution de code via feuille de style (`transformXmlWithStylesheetUnsafe`)
-* **Fichier modifié :** `tika-core/src/main/java/org/apache/tika/utils/XMLReaderUtils.java`[cite: 1]
-* **Justification du choix du fichier :** `XMLReaderUtils` contient déjà les méthodes de fabrique `getTransformer()` et `getTransformerFactory()`[cite: 1], explicitement durcies pour prévenir les vulnérabilités XML (comme en témoigne la référence interne à `CVE-2025-54988` dans le fichier[cite: 1]). Introduire une méthode parallèle contournant `getTransformerFactory()` met en évidence la valeur de l'analyse statique pour détecter des régressions de sécurité au sein d'un composant critique[cite: 1].
+* **Fichier modifié :** `tika-core/src/main/java/org/apache/tika/utils/XMLReaderUtils.java`
+* **Justification du choix du fichier :** `XMLReaderUtils` contient déjà les méthodes de fabrique `getTransformer()` et `getTransformerFactory()`, explicitement durcies pour prévenir les vulnérabilités XML (comme en témoigne la référence interne à `CVE-2025-54988` dans le fichier). Introduire une méthode parallèle contournant `getTransformerFactory()` met en évidence la valeur de l'analyse statique pour détecter des régressions de sécurité au sein d'un composant critique.
 * **Type de vulnérabilité :** Injection XSLT — **CWE-91** / **OWASP A03:2021 (Injection)**.
-* **Raison de la vulnérabilité :** La méthode instancie un `TransformerFactory.newInstance()` brut et compile directement une feuille de style XSLT provenant d'un flux externe (`factory.newTransformer(new StreamSource(xsltStream))`) sans activer `XMLConstants.FEATURE_SECURE_PROCESSING` ni restreindre `ACCESS_EXTERNAL_STYLESHEET`[cite: 1]. En Java (via le processeur Xalan intégré), les extensions XSLT permettent d'instancier et d'invoquer des méthodes statiques Java arbitraries lors de la transformation.
-* **Résultat obtenu avec Semgrep :** Détectée comme **alerte bloquante
+* **Raison de la vulnérabilité :** La méthode instancie un `TransformerFactory.newInstance()` brut et compile directement une feuille de style XSLT provenant d'un flux externe (`factory.newTransformer(new StreamSource(xsltStream))`) sans activer `XMLConstants.FEATURE_SECURE_PROCESSING` ni restreindre `ACCESS_EXTERNAL_STYLESHEET`. En Java (via le processeur Xalan intégré), les extensions XSLT permettent d'instancier et d'invoquer des méthodes statiques Java arbitraries lors de la transformation.
+* **Résultat obtenu avec Semgrep :** Détectée comme **alerte bloquante(`ERROR`)** par la règle `java.lang.security.audit.xslt-injection`.
 
 ---
 

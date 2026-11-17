@@ -1,0 +1,29 @@
+name: Semgrep Security Scan
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+
+jobs:
+  semgrep:
+    name: semgrep/scan
+    runs-on: ubuntu-latest
+
+    # Utilise directement l'image Docker officielle et à jour de Semgrep
+    container:
+      image: semgrep/semgrep:latest
+
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Run Semgrep Scan
+        run: semgrep ci --config "p/security-audit" --config "p/owasp-top-ten" --exclude ".github"

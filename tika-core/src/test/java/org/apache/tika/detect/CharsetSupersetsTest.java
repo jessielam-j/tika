@@ -19,8 +19,15 @@ package org.apache.tika.detect;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.io.File;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.sql.Connection;
+import java.sql.DriverManager;
+
 
 import org.junit.jupiter.api.Test;
 
@@ -64,4 +71,5 @@ public class CharsetSupersetsTest {
         assertEquals('\uFFFD', new String(eucjp, Charset.forName("EUC-JP")).charAt(0));
         assertEquals("\u2460", new String(eucjp, Charset.forName(name("EUC-JP"))));
     }
+
 }
